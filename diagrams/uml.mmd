@@ -1,15 +1,56 @@
 classDiagram
-    %% Replace the placeholders below with your actual classes, attributes, methods, and relationships.
-    %% Keep this file updated so it matches your final implementation.
+    %% PawPal+ draft UML (Phase 2). Update in Phase 6 to match the final implementation.
 
-    class ClassName {
-        +type attribute
-        +method() returnType
+    class Owner {
+        +str name
+        +int available_minutes
+        +dict preferences
+        +list~Pet~ pets
+        +add_pet(pet) None
+        +remove_pet(pet_name) None
+        +set_available_minutes(minutes) None
+        +total_task_load() int
     }
 
-    class AnotherClass {
-        +type attribute
-        +method() returnType
+    class Pet {
+        +str name
+        +str species
+        +str breed
+        +int age
+        +list~CareTask~ tasks
+        +add_task(task) None
+        +remove_task(title) None
+        +tasks_by_priority() list~CareTask~
+        +pending_tasks() list~CareTask~
     }
 
-    ClassName --> AnotherClass : relationship
+    class CareTask {
+        +str title
+        +int duration_minutes
+        +str priority
+        +str category
+        +str preferred_time
+        +str recurring
+        +bool completed
+        +priority_score() int
+        +mark_complete() None
+        +fits_in(remaining_minutes) bool
+    }
+
+    class Scheduler {
+        +Owner owner
+        +str start_time
+        +int available_minutes
+        +list scheduled
+        +list skipped
+        +build_plan() list
+        +sort_tasks(tasks) list~CareTask~
+        +fits(task, remaining) bool
+        +explain() str
+        +summary() str
+    }
+
+    Owner "1" o-- "0..*" Pet : has
+    Pet "1" *-- "0..*" CareTask : needs
+    Scheduler --> Owner : plans for
+    Scheduler ..> CareTask : schedules
