@@ -92,3 +92,24 @@ Describe your app in numbered steps so a reader can follow along without watchin
 5. <!-- Add more steps as needed -->
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+
+## Sample Output
+
+Output of `python main.py`:
+
+```text
+Today's Schedule for Sam
+============================================================
+Time   Pet      Task               Min  Priority
+------------------------------------------------------------
+08:00  Luna     Breakfast           10  high
+08:30  Mochi    Morning walk        30  high
+09:30  Luna     Medication           5  high
+18:00  Mochi    Evening walk        30  medium
+------------------------------------------------------------
+Skipped:
+  Luna: Laser play (needs 20 min but only 15 left)
+  Mochi: Grooming (needs 25 min but only 15 left)
+============================================================
+4 scheduled, 2 skipped; 75 of 90 min used, 15 left
+```
