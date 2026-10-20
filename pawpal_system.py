@@ -25,6 +25,7 @@ class CareTask:
         self.preferred_time = preferred_time
         self.recurring = recurring
         self.completed = False
+        self.pet = None  # set by Pet.add_task so a scheduled task knows whose it is
 
     def priority_score(self):
         """Return a sortable number for this task's priority (higher = more urgent)."""
@@ -101,9 +102,14 @@ class Scheduler:
     def __init__(self, owner, start_time="08:00", available_minutes=None):
         self.owner = owner
         self.start_time = start_time
+        # Optional override; None means "use owner.available_minutes".
         self.available_minutes = available_minutes
-        self.scheduled = []
-        self.skipped = []
+        self.scheduled = []  # list of (task, "HH:MM" start time)
+        self.skipped = []  # list of (task, reason)
+
+    def minutes_budget(self):
+        """Return the time budget in effect: the override if set, else the owner's."""
+        pass
 
     def build_plan(self):
         """Select and order tasks into a daily plan. Populates scheduled and skipped."""
