@@ -10,8 +10,14 @@ Three core actions:
 2. schedule times to feed pet
 3. see daily tasks
 
-- Briefly describe your initial UML design.
-- What classes did you include, and what responsibilities did you assign to each?
+My initial UML has four classes. Data lives in three of them (`Owner`, `Pet`, `CareTask`) and the planning logic is kept separate in `Scheduler`:
+
+- **Owner** holds the user's name, their daily time budget (`available_minutes`), preferences, and their list of pets. It manages its pets and can report the total minutes of pending work across all of them.
+- **Pet** holds the animal's details and its own list of `CareTask`s. It adds and removes tasks and can return its tasks sorted by priority or only the pending ones.
+- **CareTask** is one unit of care (walk, feeding, meds). It stores duration, priority, category, preferred time, recurrence, and completion state. It knows how to turn its priority into a sortable score, mark itself done, and check whether it fits in the time left.
+- **Scheduler** takes an `Owner` and builds the daily plan. It sorts tasks, places them within the time budget, records what was scheduled and what was skipped, and explains why.
+
+Relationships: Owner has many Pets, Pet has many CareTasks, and Scheduler uses an Owner.
 
 Object brainstorm
 
@@ -37,8 +43,14 @@ Object brainstorm
 
 **b. Design changes**
 
-- Did your design change during implementation?
-- If yes, describe at least one change and why you made it.
+I asked my AI assistant to review `pawpal_system.py` for missing relationships and logic bottlenecks. It raised these points, and I made two changes:
+
+1. **Tasks didn't know their pet (changed).** `Scheduler.scheduled` would have been a flat list of tasks, so the plan couldn't say "Walk — Mochi." I added a `pet` back-reference on `CareTask`, set when `Pet.add_task` is called. `Scheduler.scheduled` now holds `(task, start_time)` pairs, so each scheduled task also carries its start time.
+2. **Two sources of truth for the time budget (changed).** Both `Owner` and `Scheduler` had `available_minutes`, which could disagree. I kept the Scheduler field as an optional override (`None` means use the owner's) and added `minutes_budget()` so the scheduler has a single place to read the effective budget.
+3. **Not changed yet, noted for later:**
+   - Tasks are removed by title, which is ambiguous if two pets both have a "Walk". I'll handle that when implementing, either by removing within a single pet or by using IDs.
+   - `completed` never resets for recurring tasks, so a daily task stays done forever. The next iteration needs a reset or a per-day completion record.
+   - `priority` and `preferred_time` are plain strings. They should be validated (low/medium/high, "HH:MM") when implemented.
 
 ---
 
