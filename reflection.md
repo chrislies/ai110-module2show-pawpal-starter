@@ -4,8 +4,36 @@
 
 **a. Initial design**
 
+Three core actions:
+
+1. enter basic owner + pet info
+2. schedule times to feed pet
+3. see daily tasks
+
 - Briefly describe your initial UML design.
 - What classes did you include, and what responsibilities did you assign to each?
+
+Object brainstorm
+
+1. Owner — the person using the app
+
+- Attributes: name, available_minutes (time budget for the day), preferences (e.g. preferred start time, "no walks after dark"), pets (list)
+- Methods: add_pet(pet), remove_pet(pet_name), set_available_minutes(mins), total_task_load() — sum of all pets' task durations
+
+2. Pet — the animal being cared for
+
+- Attributes: name, species, breed, age, tasks (list of CareTask)
+- Methods: add_task(task), remove_task(title), tasks_by_priority(), pending_tasks() — tasks not yet done today
+
+3. CareTask — one unit of care work
+
+- Attributes: title, duration_minutes, priority (low/medium/high), category (walk/feed/meds/grooming/enrichment), preferred_time, recurring (daily/weekly), completed
+- Methods: priority_score() — maps priority to a sortable number, mark_complete(), fits_in(remaining_minutes), **str**()
+
+4. Scheduler — builds the daily plan
+
+- Attributes: owner, start_time, available_minutes, scheduled (list of placed tasks), skipped (list of (task, reason))
+- Methods: build_plan(), sort_tasks(tasks), fits(task, remaining), explain() — the "why this plan" narrative, summary()
 
 **b. Design changes**
 
