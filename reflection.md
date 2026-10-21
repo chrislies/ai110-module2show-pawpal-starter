@@ -58,8 +58,14 @@ I asked my AI assistant to review `pawpal_system.py` for missing relationships a
 
 **a. Constraints and priorities**
 
-- What constraints does your scheduler consider (for example: time, priority, preferences)?
-- How did you decide which constraints mattered most?
+The scheduler works within four constraints:
+
+- **Time budget.** The owner's available minutes for the day are a hard limit. A task that no longer fits is skipped, and the plan records why.
+- **Priority.** Tasks are chosen high, then medium, then low. Among equal priorities, an earlier preferred time wins, then the shorter task.
+- **Preferred time.** Chosen tasks are ordered by preferred time and given start times. A task never starts before its preferred time, and tasks that would overlap are pushed later.
+- **Due date.** Only tasks due today or earlier are planned, so tomorrow's copy of a daily task stays out of today's plan.
+
+I put the time budget first because it is the one constraint that cannot bend: there are only so many minutes. Priority comes next because the owner's main question is "what must not be skipped?" (medication before grooming). Preferred time is a preference, so it shapes the order but never causes a task to be dropped.
 
 **b. Tradeoffs**
 
@@ -96,13 +102,15 @@ hard to read.
 
 **a. How you used AI**
 
-- How did you use AI tools during this project (for example: design brainstorming, debugging, refactoring)?
-- What kinds of prompts or questions were most helpful?
+I used the AI assistant for design review (it spotted that tasks did not know their pet and that the time budget lived in two places), for implementing each phase in small steps (classes, then Streamlit wiring, then sorting, filtering, recurrence, and conflicts), for drafting tests, and for keeping the docs and UML in line with the code. The most useful prompts were narrow and named the method and the behavior I wanted, for example "add `sort_by_time()` that orders tasks by their `HH:MM` time". Asking it to review finished code for missing relationships and bottlenecks also paid off. The most effective workflow was having it edit several files at once and then run `main.py` and `pytest` straight away, so every change was checked by real output.
+
+TODO (yours to fill in): how did using separate chat sessions for each phase (design, algorithms, testing) help you stay organized, and what would you do differently?
 
 **b. Judgment and verification**
 
-- Describe one moment where you did not accept an AI suggestion as-is.
-- How did you evaluate or verify what the AI suggested?
+My AI design review raised five issues, and I did not accept all of them as-is. I made the two that fixed real problems now (the `pet` back-reference on `CareTask`, and a single `minutes_budget()` for the time budget) and deliberately deferred the rest (remove-by-title ambiguity, `completed` never resetting, and string validation) until the logic existed to need them. Doing everything at once would have grown the design before I knew what the scheduler actually needed. The "completed never resets" issue was later solved a different way than a reset flag: completing a recurring task creates a new `CareTask` for the next date, so each occurrence keeps its own history. A second case was the `detect_conflicts` simplification. I took the shorter `itertools.combinations` version but kept the pet-name label as a separate expression because merging it into the message hurt readability.
+
+I checked AI suggestions by running them: `python main.py` with deliberately out-of-order and clashing tasks, then the pytest suite. I also read the generated code before keeping it.
 
 ---
 
@@ -110,13 +118,11 @@ hard to read.
 
 **a. What you tested**
 
-- What behaviors did you test?
-- Why were these tests important?
+I tested the five behaviors that make the scheduler "smart": sorting (chronological order, untimed tasks last), filtering (by pet and status), recurrence (daily and weekly due dates, month and year rollover, one-offs), conflict detection (same time, overlapping windows, back-to-back tasks not flagged), and plan building (priority wins when time is short, same-time tasks are pushed apart). I also tested input validation and the empty cases (no tasks, unknown pet). These matter because each one is a place where a quiet mistake would hand the owner a wrong plan without any error.
 
 **b. Confidence**
 
-- How confident are you that your scheduler works correctly?
-- What edge cases would you test next if you had more time?
+I am fairly confident (4 out of 5). All 24 tests pass. I did not automate tests of the Streamlit UI; I checked it with a scripted run and by hand. With more time I would test: tasks that run past midnight, an owner with zero available minutes, two pets with the same name, many tasks with the same preferred time, a weekly task completed several days late, and a completed recurring task being completed twice.
 
 ---
 
@@ -124,12 +130,12 @@ hard to read.
 
 **a. What went well**
 
-- What part of this project are you most satisfied with?
+I am most satisfied with how the backend and the UI stay separate. All scheduling lives in `pawpal_system.py`, so the same logic runs from the terminal demo, the tests, and the Streamlit app, and conflict warnings reach the owner as plain-language messages in the UI.
 
 **b. What you would improve**
 
-- If you had another iteration, what would you improve or redesign?
+I would let owners edit and delete tasks in the UI, since a conflicting task can currently only be worked around by adding a new one. I would also make conflict detection compare the times the plan actually assigns, replace the greedy picker with a better packing of tasks into the available time, and add per-day completion records.
 
 **c. Key takeaway**
 
-- What is one important thing you learned about designing systems or working with AI on this project?
+Working with a powerful AI tool made me the lead architect: it can write a lot of code quickly, but it does not decide what the system should be. I set the boundaries (logic in `pawpal_system.py`, UI in `app.py`), decided which suggestions to take now and which to defer, and chose clarity over cleverness when the two conflicted. The habit that mattered most was verifying everything by running it, with a demo that deliberately triggers the edge cases, then tests that pin them down, then the UI.
