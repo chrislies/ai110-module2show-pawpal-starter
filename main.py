@@ -38,9 +38,18 @@ def main():
     luna.add_task(CareTask("Medication", 5, "high", "meds", preferred_time="09:30"))
     luna.add_task(CareTask("Laser play", 20, "medium", "enrichment"))
 
+    # Deliberate clashes: same pet at the same time, and two pets overlapping.
+    luna.add_task(CareTask("Vet call", 15, "medium", "vet", preferred_time="08:30"))
+    luna.add_task(CareTask("Brushing", 15, "low", "grooming", preferred_time="08:05"))
+
     scheduler = Scheduler(owner, start_time="08:00")
     scheduler.build_plan()
     print_schedule(scheduler)
+
+    print("\nConflict check:")
+    conflicts = scheduler.detect_conflicts()
+    for warning in conflicts or ["No conflicts found."]:
+        print(f"  {warning}")
 
     print("\nAll tasks sorted by preferred time:")
     for task in scheduler.sort_by_time():

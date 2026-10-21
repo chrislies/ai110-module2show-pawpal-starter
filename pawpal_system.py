@@ -261,6 +261,33 @@ class Scheduler:
             and (completed is None or t.completed == completed)
         ]
 
+    def detect_conflicts(self):
+        """Return warning strings for pending tasks whose preferred times overlap.
+
+        Lightweight check: it never raises or changes the plan. Two tasks
+        conflict when their [start, start + duration) windows overlap, whether
+        they belong to the same pet or different pets. Untimed tasks are ignored.
+        """
+        timed = self.sort_by_time([t for t in self.due_tasks() if t.preferred_time])
+        warnings = []
+        for i, first in enumerate(timed):
+            first_start = _to_minutes(first.preferred_time)
+            first_end = first_start + first.duration_minutes
+            for second in timed[i + 1 :]:
+                if _to_minutes(second.preferred_time) >= first_end:
+                    break  # sorted by start, so nothing later can overlap
+                scope = (
+                    f"for {first.pet.name}"
+                    if first.pet is second.pet
+                    else f"for {first.pet.name if first.pet else '?'} and "
+                    f"{second.pet.name if second.pet else '?'}"
+                )
+                warnings.append(
+                    f"Warning: '{first.title}' ({first.preferred_time}, {first.duration_minutes} min) "
+                    f"overlaps '{second.title}' ({second.preferred_time}) {scope}"
+                )
+        return warnings
+
     def fits(self, task, remaining):
         """Return True if the task can still be placed in the remaining time."""
         return task.fits_in(remaining)
