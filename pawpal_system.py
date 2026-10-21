@@ -5,7 +5,10 @@ Scheduler. The Scheduler reads every task through Owner.get_all_tasks() so a
 plan always spans all of the owner's pets.
 """
 
+from datetime import date, timedelta
+
 PRIORITY_SCORES = {"low": 1, "medium": 2, "high": 3}
+RECURRENCE_DAYS = {"daily": 1, "weekly": 7}
 
 
 def _to_minutes(hhmm):
@@ -30,7 +33,8 @@ class CareTask:
         priority="medium",
         category="other",
         preferred_time=None,
-        recurring="daily",
+        recurring=None,
+        due_date=None,
     ):
         if priority not in PRIORITY_SCORES:
             raise ValueError(f"priority must be one of {sorted(PRIORITY_SCORES)}")
@@ -43,7 +47,8 @@ class CareTask:
         self.priority = priority
         self.category = category
         self.preferred_time = preferred_time
-        self.recurring = recurring
+        self.recurring = recurring  # "daily", "weekly", or None for a one-off
+        self.due_date = due_date or date.today()
         self.completed = False
         self.pet = None  # set by Pet.add_task so a scheduled task knows whose it is
 
@@ -54,6 +59,21 @@ class CareTask:
     def mark_complete(self):
         """Mark this task as done for the day."""
         self.completed = True
+
+    def next_occurrence(self):
+        """Return a fresh task due at the next occurrence, or None if one-off."""
+        days = RECURRENCE_DAYS.get(self.recurring)
+        if days is None:
+            return None
+        return CareTask(
+            self.title,
+            self.duration_minutes,
+            self.priority,
+            self.category,
+            self.preferred_time,
+            self.recurring,
+            due_date=self.due_date + timedelta(days=days),
+        )
 
     def fits_in(self, remaining_minutes):
         """Return True if this task can be done within the minutes left."""
@@ -143,8 +163,9 @@ class Owner:
 class Scheduler:
     """Builds a daily plan from an owner's pets, tasks, and time budget."""
 
-    def __init__(self, owner, start_time="08:00", available_minutes=None):
+    def __init__(self, owner, start_time="08:00", available_minutes=None, plan_date=None):
         self.owner = owner
+        self.plan_date = plan_date or date.today()
         self.start_time = start_time
         # Optional override; None means "use owner.available_minutes".
         self.available_minutes = available_minutes
@@ -157,6 +178,21 @@ class Scheduler:
             return self.available_minutes
         return self.owner.available_minutes
 
+    def due_tasks(self):
+        """Return pending tasks due on or before the plan date."""
+        return [t for t in self.owner.get_all_tasks(pending_only=True) if t.due_date <= self.plan_date]
+
+    def mark_task_complete(self, task):
+        """Complete a task; if it recurs, add the next occurrence to its pet.
+
+        Returns the new CareTask, or None for a one-off task.
+        """
+        task.mark_complete()
+        following = task.next_occurrence()
+        if following is not None and task.pet is not None:
+            task.pet.add_task(following)
+        return following
+
     def build_plan(self):
         """Select and order tasks into a daily plan. Populates scheduled and skipped."""
         self.scheduled = []
@@ -165,7 +201,7 @@ class Scheduler:
 
         # Select by priority (greedy), reading across all pets via the Owner.
         chosen = []
-        for task in self.sort_tasks(self.owner.get_all_tasks(pending_only=True)):
+        for task in self.sort_tasks(self.due_tasks()):
             if self.fits(task, remaining):
                 chosen.append(task)
                 remaining -= task.duration_minutes

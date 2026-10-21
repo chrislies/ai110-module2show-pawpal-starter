@@ -31,8 +31,8 @@ def main():
     owner.add_pet(mochi)
     owner.add_pet(luna)
 
-    mochi.add_task(CareTask("Morning walk", 30, "high", "walk", preferred_time="08:30"))
-    mochi.add_task(CareTask("Grooming", 25, "low", "grooming"))
+    mochi.add_task(CareTask("Morning walk", 30, "high", "walk", preferred_time="08:30", recurring="daily"))
+    mochi.add_task(CareTask("Grooming", 25, "low", "grooming", recurring="weekly"))
     mochi.add_task(CareTask("Evening walk", 30, "medium", "walk", preferred_time="18:00"))
     luna.add_task(CareTask("Breakfast", 10, "high", "feed", preferred_time="08:00"))
     luna.add_task(CareTask("Medication", 5, "high", "meds", preferred_time="09:30"))
@@ -47,6 +47,14 @@ def main():
         print(f"  {task.preferred_time or '--:--'}  {task}")
 
     luna.tasks[0].mark_complete()  # Breakfast is done
+
+    print("\nRecurring tasks:")
+    for task in (mochi.tasks[0], mochi.tasks[1], luna.tasks[2]):
+        following = scheduler.mark_task_complete(task)
+        if following:
+            print(f"  {task.title}: done {task.due_date}, next due {following.due_date} ({task.recurring})")
+        else:
+            print(f"  {task.title}: done, one-off so no new task")
     print("\nLuna's tasks:")
     for task in scheduler.filter_tasks(pet_name="Luna"):
         print(f"  {task}")
