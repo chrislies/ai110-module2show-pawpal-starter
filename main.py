@@ -42,6 +42,21 @@ def main():
     scheduler.build_plan()
     print_schedule(scheduler)
 
+    print("\nAll tasks sorted by preferred time:")
+    for task in scheduler.sort_by_time():
+        print(f"  {task.preferred_time or '--:--'}  {task}")
+
+    luna.tasks[0].mark_complete()  # Breakfast is done
+    print("\nLuna's tasks:")
+    for task in scheduler.filter_tasks(pet_name="Luna"):
+        print(f"  {task}")
+    print("\nCompleted tasks:")
+    for task in scheduler.filter_tasks(completed=True):
+        print(f"  {task}")
+    print("\nPending tasks for Mochi, by time:")
+    for task in scheduler.sort_by_time(scheduler.filter_tasks("Mochi", completed=False)):
+        print(f"  {task.preferred_time or '--:--'}  {task}")
+
 
 if __name__ == "__main__":
     main()
