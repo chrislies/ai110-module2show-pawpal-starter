@@ -1,0 +1,76 @@
+classDiagram
+    %% PawPal+ final UML. Matches pawpal_system.py as implemented.
+
+    class Owner {
+        +str name
+        +int available_minutes
+        +dict preferences
+        +list~Pet~ pets
+        +add_pet(pet) None
+        +remove_pet(pet_name) bool
+        +set_available_minutes(minutes) None
+        +get_all_tasks(pending_only) list~CareTask~
+        +total_task_load() int
+    }
+
+    class Pet {
+        +str name
+        +str species
+        +str breed
+        +int age
+        +list~CareTask~ tasks
+        +add_task(task) None
+        +remove_task(title) bool
+        +tasks_by_priority() list~CareTask~
+        +pending_tasks() list~CareTask~
+    }
+
+    class CareTask {
+        +str title
+        +int duration_minutes
+        +str priority
+        +str category
+        +str preferred_time
+        +str recurring
+        +date due_date
+        +bool completed
+        +Pet pet
+        +priority_score() int
+        +mark_complete() None
+        +next_occurrence() CareTask
+        +fits_in(remaining_minutes) bool
+    }
+
+    class Scheduler {
+        +Owner owner
+        +str start_time
+        +int available_minutes
+        +date plan_date
+        +list scheduled
+        +list skipped
+        +minutes_budget() int
+        +due_tasks() list~CareTask~
+        +build_plan() list
+        +sort_tasks(tasks) list~CareTask~
+        +sort_by_time(tasks) list~CareTask~
+        +filter_tasks(pet_name, completed) list~CareTask~
+        +detect_conflicts() list~str~
+        +mark_task_complete(task) CareTask
+        +fits(task, remaining) bool
+        +explain() str
+        +summary() str
+    }
+
+    %% Ownership: an owner has pets, a pet has tasks.
+    Owner "1" o-- "0..*" Pet : has
+    Pet "1" *-- "0..*" CareTask : needs
+    %% Pet.add_task sets task.pet, so a task knows whose it is.
+    CareTask "0..*" --> "0..1" Pet : belongs to
+
+    %% The scheduler reads every task through Owner.get_all_tasks().
+    Scheduler --> Owner : plans for
+    Scheduler ..> CareTask : sorts, filters, schedules
+    %% mark_task_complete adds the next occurrence to the task's pet.
+    Scheduler ..> Pet : adds recurring task to
+    %% next_occurrence builds a new CareTask for daily/weekly tasks.
+    CareTask ..> CareTask : next_occurrence creates
