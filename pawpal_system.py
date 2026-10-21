@@ -200,6 +200,31 @@ class Scheduler:
             ),
         )
 
+    def sort_by_time(self, tasks=None):
+        """Return tasks ordered by preferred time (earliest first, untimed last).
+
+        Defaults to every task across the owner's pets. Times are compared as
+        minutes rather than strings so "8:30" and "08:30" order correctly.
+        """
+        if tasks is None:
+            tasks = self.owner.get_all_tasks()
+        return sorted(
+            tasks,
+            key=lambda t: _to_minutes(t.preferred_time) if t.preferred_time else 24 * 60,
+        )
+
+    def filter_tasks(self, pet_name=None, completed=None):
+        """Return tasks matching a pet name and/or completion status.
+
+        Either filter may be omitted (None) to skip it.
+        """
+        return [
+            t
+            for t in self.owner.get_all_tasks()
+            if (pet_name is None or (t.pet and t.pet.name == pet_name))
+            and (completed is None or t.completed == completed)
+        ]
+
     def fits(self, task, remaining):
         """Return True if the task can still be placed in the remaining time."""
         return task.fits_in(remaining)
