@@ -62,7 +62,12 @@ class CareTask:
         self.completed = True
 
     def next_occurrence(self):
-        """Return a fresh task due at the next occurrence, or None if one-off."""
+        """Return a fresh task due at the next occurrence, or None if one-off.
+
+        "daily" tasks come due 1 day after this one and "weekly" tasks 7 days
+        after, computed with timedelta so month and year boundaries work. The
+        copy is not attached to a pet; Scheduler.mark_task_complete does that.
+        """
         days = RECURRENCE_DAYS.get(self.recurring)
         if days is None:
             return None
@@ -180,12 +185,16 @@ class Scheduler:
         return self.owner.available_minutes
 
     def due_tasks(self):
-        """Return pending tasks due on or before the plan date."""
+        """Return pending tasks due on or before the plan date.
+
+        This keeps future occurrences of recurring tasks out of today's plan.
+        """
         return [t for t in self.owner.get_all_tasks(pending_only=True) if t.due_date <= self.plan_date]
 
     def mark_task_complete(self, task):
         """Complete a task; if it recurs, add the next occurrence to its pet.
 
+        Use this instead of CareTask.mark_complete() when recurrence matters.
         Returns the new CareTask, or None for a one-off task.
         """
         task.mark_complete()
@@ -253,7 +262,9 @@ class Scheduler:
     def filter_tasks(self, pet_name=None, completed=None):
         """Return tasks matching a pet name and/or completion status.
 
-        Either filter may be omitted (None) to skip it.
+        Either filter may be omitted (None) to skip it. completed=True gives
+        finished tasks, completed=False gives pending ones. Results keep the
+        owner's pet order, so pass them to sort_by_time() to order by time.
         """
         return [
             t

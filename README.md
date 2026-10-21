@@ -72,14 +72,27 @@ Sample test output:
 
 ## 📐 Smarter Scheduling
 
-> Fill in once you've implemented scheduling logic.
+PawPal+ goes beyond a fixed to-do list with four small algorithms, all in
+`pawpal_system.py`.
 
 | Feature | Method(s) | Notes |
 |---------|-----------|-------|
-| Task sorting | | e.g., by priority, duration |
-| Filtering | | e.g., skip tasks if time runs out |
-| Conflict handling | | e.g., overlapping time slots |
-| Recurring tasks | | e.g., daily vs. weekly |
+| Sorting | `Scheduler.sort_by_time()` | Orders tasks by preferred time, earliest first, with untimed tasks last. Times are compared as minutes, so `8:30` sorts before `10:00`. Defaults to every task across all pets. |
+| Filtering | `Scheduler.filter_tasks(pet_name, completed)` | Returns tasks for one pet, by completion status, or both. Either filter can be left out. Pass the result to `sort_by_time()` to combine them. |
+| Conflict detection | `Scheduler.detect_conflicts()` | Flags pending tasks whose preferred-time windows (start plus duration) overlap, for the same pet or different pets. Returns warning strings and never raises or changes the plan. Tasks with no preferred time are ignored. |
+| Recurring tasks | `CareTask.next_occurrence()`, `Scheduler.mark_task_complete()` | Completing a `"daily"` task creates a copy due 1 day later and a `"weekly"` task 7 days later, using `timedelta`. The copy is added to the same pet. One-off tasks (`recurring=None`) create nothing. |
+
+Supporting behavior:
+
+- `CareTask.due_date` defaults to today. `Scheduler.due_tasks()` lets
+  `build_plan()` skip tasks that are not due yet, so tomorrow's walk is not
+  scheduled today.
+- `build_plan()` still selects greedily by priority until the time budget runs
+  out, then orders by preferred time. Conflict warnings describe the *requested*
+  times; the final plan never overlaps because later tasks are pushed back.
+
+Run `python main.py` to see sorting, filtering, recurrence, and conflict
+warnings in the terminal.
 
 ## 📸 Demo Walkthrough
 
