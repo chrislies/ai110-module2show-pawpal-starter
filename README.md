@@ -57,18 +57,33 @@ Paste a sample of your app's CLI or Streamlit output here so a reader can see wh
 ## 🧪 Testing PawPal+
 
 ```bash
-# Run the full test suite:
-pytest
-
-# Run with coverage:
-pytest --cov
+python -m pytest
 ```
+
+The 24 tests in `tests/test_pawpal.py` cover:
+
+- **Sorting:** chronological order across pets, untimed tasks last, unpadded hours (`8:30`), and an empty task list.
+- **Filtering:** by pet, by completion status, and both together, plus an unknown pet name.
+- **Recurring tasks:** completing a daily task creates one due the next day on the same pet, weekly adds 7 days, month and year rollover, one-off tasks create nothing, and tomorrow's task is not planned today.
+- **Conflict detection:** same time for one pet and across pets, overlapping windows flagged, back-to-back tasks not flagged, and untimed or completed tasks ignored.
+- **Plan building:** high priority wins when time is short, same-time tasks are pushed apart, and an empty plan.
+- **Validation:** bad duration, priority, or time values raise `ValueError`.
 
 Sample test output:
 
 ```
-# Paste your pytest output here
+============================= test session starts =============================
+platform win32 -- Python 3.13.1, pytest-8.4.2, pluggy-1.6.0
+rootdir: D:\Programming\codepath\ai110\ai110-module2show-pawpal-starter
+plugins: anyio-4.9.0
+collected 24 items
+
+tests\test_pawpal.py ........................                            [100%]
+
+============================= 24 passed in 0.04s ==============================
 ```
+
+**Confidence level: ★★★★☆ (4/5).** All 24 tests pass and they cover the main scheduling behaviors and their edge cases. I am not giving 5 because the Streamlit UI (`app.py`) has no automated tests, conflict detection only looks at preferred times, and the scheduler picks tasks greedily by priority, so it may not fit the most tasks into the time available.
 
 ## 📐 Smarter Scheduling
 
