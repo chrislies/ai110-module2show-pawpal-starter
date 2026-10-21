@@ -6,6 +6,7 @@ plan always spans all of the owner's pets.
 """
 
 from datetime import date, timedelta
+from itertools import combinations
 
 PRIORITY_SCORES = {"low": 1, "medium": 2, "high": 3}
 RECURRENCE_DAYS = {"daily": 1, "weekly": 7}
@@ -270,21 +271,14 @@ class Scheduler:
         """
         timed = self.sort_by_time([t for t in self.due_tasks() if t.preferred_time])
         warnings = []
-        for i, first in enumerate(timed):
-            first_start = _to_minutes(first.preferred_time)
-            first_end = first_start + first.duration_minutes
-            for second in timed[i + 1 :]:
-                if _to_minutes(second.preferred_time) >= first_end:
-                    break  # sorted by start, so nothing later can overlap
-                scope = (
-                    f"for {first.pet.name}"
-                    if first.pet is second.pet
-                    else f"for {first.pet.name if first.pet else '?'} and "
-                    f"{second.pet.name if second.pet else '?'}"
-                )
+        for first, second in combinations(timed, 2):
+            # Sorted by start time, so they overlap if second starts before first ends.
+            first_end = _to_minutes(first.preferred_time) + first.duration_minutes
+            if _to_minutes(second.preferred_time) < first_end:
+                pets = " and ".join(dict.fromkeys(t.pet.name if t.pet else "?" for t in (first, second)))
                 warnings.append(
                     f"Warning: '{first.title}' ({first.preferred_time}, {first.duration_minutes} min) "
-                    f"overlaps '{second.title}' ({second.preferred_time}) {scope}"
+                    f"overlaps '{second.title}' ({second.preferred_time}) for {pets}"
                 )
         return warnings
 
