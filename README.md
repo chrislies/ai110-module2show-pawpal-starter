@@ -42,7 +42,7 @@ pip install -r requirements.txt
 6. Connect your logic to the Streamlit UI in `app.py`.
 7. Refine UML so it matches what you actually built.
 
-## ✨ Features
+## Features
 
 - **Multiple pets, one owner.** An owner has any number of pets, and each pet has its own task list. All scheduling reads across every pet.
 - **Priority-based planning.** `Scheduler.build_plan()` picks tasks highest priority first (earlier preferred time, then shorter duration, break ties) until the owner's available minutes run out.
@@ -54,7 +54,7 @@ pip install -r requirements.txt
 - **Input validation.** Bad durations, priorities, or `HH:MM` times are rejected with a clear error.
 - **Tested.** 24 automated tests cover the scheduling logic (see [Testing PawPal+](#-testing-pawpal)).
 
-## 🧪 Testing PawPal+
+## Testing PawPal+
 
 ```bash
 python -m pytest
@@ -85,17 +85,17 @@ tests\test_pawpal.py ........................                            [100%]
 
 **Confidence level: ★★★★☆ (4/5).** All 24 tests pass and they cover the main scheduling behaviors and their edge cases. I am not giving 5 because the Streamlit UI (`app.py`) has no automated tests, conflict detection only looks at preferred times, and the scheduler picks tasks greedily by priority, so it may not fit the most tasks into the time available.
 
-## 📐 Smarter Scheduling
+## Smarter Scheduling
 
 PawPal+ goes beyond a fixed to-do list with four small algorithms, all in
 `pawpal_system.py`.
 
-| Feature | Method(s) | Notes |
-|---------|-----------|-------|
-| Sorting | `Scheduler.sort_by_time()` | Orders tasks by preferred time, earliest first, with untimed tasks last. Times are compared as minutes, so `8:30` sorts before `10:00`. Defaults to every task across all pets. |
-| Filtering | `Scheduler.filter_tasks(pet_name, completed)` | Returns tasks for one pet, by completion status, or both. Either filter can be left out. Pass the result to `sort_by_time()` to combine them. |
-| Conflict detection | `Scheduler.detect_conflicts()` | Flags pending tasks whose preferred-time windows (start plus duration) overlap, for the same pet or different pets. Returns warning strings and never raises or changes the plan. Tasks with no preferred time are ignored. |
-| Recurring tasks | `CareTask.next_occurrence()`, `Scheduler.mark_task_complete()` | Completing a `"daily"` task creates a copy due 1 day later and a `"weekly"` task 7 days later, using `timedelta`. The copy is added to the same pet. One-off tasks (`recurring=None`) create nothing. |
+| Feature            | Method(s)                                                      | Notes                                                                                                                                                                                                                       |
+| ------------------ | -------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sorting            | `Scheduler.sort_by_time()`                                     | Orders tasks by preferred time, earliest first, with untimed tasks last. Times are compared as minutes, so `8:30` sorts before `10:00`. Defaults to every task across all pets.                                             |
+| Filtering          | `Scheduler.filter_tasks(pet_name, completed)`                  | Returns tasks for one pet, by completion status, or both. Either filter can be left out. Pass the result to `sort_by_time()` to combine them.                                                                               |
+| Conflict detection | `Scheduler.detect_conflicts()`                                 | Flags pending tasks whose preferred-time windows (start plus duration) overlap, for the same pet or different pets. Returns warning strings and never raises or changes the plan. Tasks with no preferred time are ignored. |
+| Recurring tasks    | `CareTask.next_occurrence()`, `Scheduler.mark_task_complete()` | Completing a `"daily"` task creates a copy due 1 day later and a `"weekly"` task 7 days later, using `timedelta`. The copy is added to the same pet. One-off tasks (`recurring=None`) create nothing.                       |
 
 Supporting behavior:
 
@@ -103,7 +103,7 @@ Supporting behavior:
   `build_plan()` skip tasks that are not due yet, so tomorrow's walk is not
   scheduled today.
 - `build_plan()` still selects greedily by priority until the time budget runs
-  out, then orders by preferred time. Conflict warnings describe the *requested*
+  out, then orders by preferred time. Conflict warnings describe the _requested_
   times; the final plan never overlaps because later tasks are pushed back.
 
 Run `python main.py` to see sorting, filtering, recurrence, and conflict
@@ -115,14 +115,14 @@ Start the app with `streamlit run app.py`. The page is one scrolling screen, top
 
 ### What you can do in the UI
 
-| Section | Actions |
-|---------|---------|
-| **Owner** | Set your name and the minutes you have available today. |
-| **Add a Pet** | Enter a name and species. Blank or duplicate names are rejected. |
-| **Tasks** | Pick a pet and add a task with a title, duration, priority, an optional preferred time (`HH:MM`), and whether it repeats (once, daily, weekly). |
-| **Your tasks** | Filter by pet and by status (pending or completed). The table is always sorted by preferred time. |
-| **Mark complete** | Finish a task. If it repeats, the next occurrence is created automatically. |
-| **Build Schedule** | Generate today's plan, see which tasks were skipped, and open "Why this plan?" for the reasoning. |
+| Section            | Actions                                                                                                                                         |
+| ------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------- |
+| **Owner**          | Set your name and the minutes you have available today.                                                                                         |
+| **Add a Pet**      | Enter a name and species. Blank or duplicate names are rejected.                                                                                |
+| **Tasks**          | Pick a pet and add a task with a title, duration, priority, an optional preferred time (`HH:MM`), and whether it repeats (once, daily, weekly). |
+| **Your tasks**     | Filter by pet and by status (pending or completed). The table is always sorted by preferred time.                                               |
+| **Mark complete**  | Finish a task. If it repeats, the next occurrence is created automatically.                                                                     |
+| **Build Schedule** | Generate today's plan, see which tasks were skipped, and open "Why this plan?" for the reasoning.                                               |
 
 ### Example workflow
 
