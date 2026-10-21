@@ -104,7 +104,7 @@ hard to read.
 
 I used the AI assistant for design review (it spotted that tasks did not know their pet and that the time budget lived in two places), for implementing each phase in small steps (classes, then Streamlit wiring, then sorting, filtering, recurrence, and conflicts), for drafting tests, and for keeping the docs and UML in line with the code. The most useful prompts were narrow and named the method and the behavior I wanted, for example "add `sort_by_time()` that orders tasks by their `HH:MM` time". Asking it to review finished code for missing relationships and bottlenecks also paid off. The most effective workflow was having it edit several files at once and then run `main.py` and `pytest` straight away, so every change was checked by real output.
 
-TODO (yours to fill in): how did using separate chat sessions for each phase (design, algorithms, testing) help you stay organized, and what would you do differently?
+Using separate chat sessions for each phase (design, algorithms, and testing) allowed me to isolate different stages of development, making it easier to debug issues, refine implementation, and validate functionality without mixing unrelated concerns.
 
 **b. Judgment and verification**
 
