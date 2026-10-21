@@ -66,6 +66,30 @@ I asked my AI assistant to review `pawpal_system.py` for missing relationships a
 - Describe one tradeoff your scheduler makes.
 - Why is that tradeoff reasonable for this scenario?
 
+The scheduler picks tasks greedily by priority, so it never searches for the
+combination of tasks that would fill the owner's time best. For example, with
+30 minutes free it takes a 25-minute high-priority task and skips two
+10-minute medium-priority tasks, even though the two would have used the time
+well. A smarter knapsack-style search would pack more in, but it is harder to
+explain, and a pet owner expects "important things first". The explain()
+output can also state one simple rule for every skipped task.
+
+Conflict detection makes a related tradeoff. It checks whether the preferred
+time windows (start plus duration) overlap, not just exact time matches. That
+catches a 08:00 feeding that runs into an 08:05 brushing. It only warns and
+never reorders anything, because build_plan already pushes tasks back so the
+final schedule has no overlaps, and silently dropping a task the owner asked
+for would be worse than a warning. It also ignores tasks with no preferred
+time, since the scheduler is free to place those anywhere.
+
+I asked the AI how detect_conflicts could be simplified. Its suggestion was to
+replace my nested loop (with an early break once later tasks start after the
+current one ends) by itertools.combinations over the sorted tasks. I kept
+that version: it is shorter and easier to read, and giving up the early break
+costs nothing at the scale of a few dozen tasks. The pet-name label is still a
+short separate expression, because folding it into the message made the line
+hard to read.
+
 ---
 
 ## 3. AI Collaboration
