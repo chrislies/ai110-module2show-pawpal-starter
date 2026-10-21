@@ -42,17 +42,17 @@ pip install -r requirements.txt
 6. Connect your logic to the Streamlit UI in `app.py`.
 7. Refine UML so it matches what you actually built.
 
-## 🖥️ Sample Output
+## ✨ Features
 
-Paste a sample of your app's CLI or Streamlit output here so a reader can see what a generated plan looks like:
-
-```
-# e.g.:
-# Daily plan for Biscuit (Golden Retriever):
-#   08:00 — Morning walk (30 min) [priority: high]
-#   09:00 — Feeding (10 min) [priority: high]
-#   ...
-```
+- **Multiple pets, one owner.** An owner has any number of pets, and each pet has its own task list. All scheduling reads across every pet.
+- **Priority-based planning.** `Scheduler.build_plan()` picks tasks highest priority first (earlier preferred time, then shorter duration, break ties) until the owner's available minutes run out.
+- **Sorting by time.** `Scheduler.sort_by_time()` lists tasks in clock order across all pets, with tasks that have no preferred time last.
+- **Filtering.** `Scheduler.filter_tasks()` narrows tasks by pet, by completion status, or both.
+- **Conflict warnings.** `Scheduler.detect_conflicts()` flags tasks whose preferred-time windows overlap, for the same pet or different pets, and returns plain-language warnings instead of raising errors.
+- **Daily and weekly recurrence.** Completing a recurring task with `Scheduler.mark_task_complete()` creates the next occurrence (+1 day or +7 days) on the same pet. Tasks not yet due are left out of today's plan.
+- **Explained plans.** `Scheduler.explain()` and `Scheduler.summary()` say what was scheduled, what was skipped and why, and how much time is left.
+- **Input validation.** Bad durations, priorities, or `HH:MM` times are rejected with a clear error.
+- **Tested.** 24 automated tests cover the scheduling logic (see [Testing PawPal+](#-testing-pawpal)).
 
 ## 🧪 Testing PawPal+
 
@@ -111,19 +111,40 @@ warnings in the terminal.
 
 ## 📸 Demo Walkthrough
 
-Describe your app in numbered steps so a reader can follow along without watching a video:
+Start the app with `streamlit run app.py`. The page is one scrolling screen, top to bottom.
 
-1. <!-- Describe this step -->
-2. <!-- Describe this step -->
-3. <!-- Describe this step -->
-4. <!-- Describe this step -->
-5. <!-- Add more steps as needed -->
+### What you can do in the UI
 
-**Screenshot or video** *(optional)*: <!-- Insert a screenshot or link to a demo video here -->
+| Section | Actions |
+|---------|---------|
+| **Owner** | Set your name and the minutes you have available today. |
+| **Add a Pet** | Enter a name and species. Blank or duplicate names are rejected. |
+| **Tasks** | Pick a pet and add a task with a title, duration, priority, an optional preferred time (`HH:MM`), and whether it repeats (once, daily, weekly). |
+| **Your tasks** | Filter by pet and by status (pending or completed). The table is always sorted by preferred time. |
+| **Mark complete** | Finish a task. If it repeats, the next occurrence is created automatically. |
+| **Build Schedule** | Generate today's plan, see which tasks were skipped, and open "Why this plan?" for the reasoning. |
 
-## Sample Output
+### Example workflow
 
-Output of `python main.py`:
+1. Set the owner's available minutes to 90.
+2. Add two pets, for example Mochi (dog) and Luna (cat).
+3. Add tasks: Mochi's "Morning walk" (30 min, high, `08:30`, daily) and Luna's "Breakfast" (10 min, high, `08:00`).
+4. Add a clashing task, such as Luna's "Vet call" at `08:30`. A warning appears right away above the task table, naming both tasks and pets, so you can fix it before building a plan.
+5. Use the filters to view only Luna's pending tasks. The list stays in time order.
+6. Click **Mark complete** on "Morning walk". A message confirms the next one is due tomorrow.
+7. Click **Generate schedule** to see today's plan with start times, a summary of time used, and a warning for anything skipped for lack of time.
+
+### Scheduler behaviors shown
+
+- **Sorting:** tasks from different pets are listed in clock order, with untimed tasks last.
+- **Filtering:** by pet and by completion status, combined with the sort.
+- **Conflict warnings:** overlapping preferred times are flagged for the same pet or across pets, as warnings that never block the plan.
+- **Recurrence:** completing a daily or weekly task creates the next one; it does not appear in today's plan.
+- **Constraint handling:** when time runs short, lower-priority tasks are skipped and the plan says why. Tasks that would start at the same time are pushed apart so the final schedule never overlaps.
+
+### Sample CLI output
+
+`python main.py` runs the same logic in the terminal, with deliberately clashing tasks:
 
 ```text
 Today's Schedule for Sam
@@ -132,12 +153,53 @@ Time   Pet      Task               Min  Priority
 ------------------------------------------------------------
 08:00  Luna     Breakfast           10  high
 08:30  Mochi    Morning walk        30  high
+09:00  Luna     Vet call            15  medium
 09:30  Luna     Medication           5  high
 18:00  Mochi    Evening walk        30  medium
 ------------------------------------------------------------
 Skipped:
-  Luna: Laser play (needs 20 min but only 15 left)
-  Mochi: Grooming (needs 25 min but only 15 left)
+  Luna: Laser play (needs 20 min but only 0 left)
+  Luna: Brushing (needs 15 min but only 0 left)
+  Mochi: Grooming (needs 25 min but only 0 left)
 ============================================================
-4 scheduled, 2 skipped; 75 of 90 min used, 15 left
+5 scheduled, 3 skipped; 90 of 90 min used, 0 left
+
+Conflict check:
+  Warning: 'Breakfast' (08:00, 10 min) overlaps 'Brushing' (08:05) for Luna
+  Warning: 'Morning walk' (08:30, 30 min) overlaps 'Vet call' (08:30) for Mochi and Luna
+
+All tasks sorted by preferred time:
+  08:00  Breakfast (Luna) - 10 min, high priority [pending]
+  08:05  Brushing (Luna) - 15 min, low priority [pending]
+  08:30  Morning walk (Mochi) - 30 min, high priority [pending]
+  08:30  Vet call (Luna) - 15 min, medium priority [pending]
+  09:30  Medication (Luna) - 5 min, high priority [pending]
+  18:00  Evening walk (Mochi) - 30 min, medium priority [pending]
+  --:--  Grooming (Mochi) - 25 min, low priority [pending]
+  --:--  Laser play (Luna) - 20 min, medium priority [pending]
+
+Recurring tasks:
+  Morning walk: done 2026-10-20, next due 2026-10-21 (daily)
+  Grooming: done 2026-10-20, next due 2026-10-27 (weekly)
+  Laser play: done, one-off so no new task
+
+Luna's tasks:
+  Breakfast (Luna) - 10 min, high priority [done]
+  Medication (Luna) - 5 min, high priority [pending]
+  Laser play (Luna) - 20 min, medium priority [done]
+  Vet call (Luna) - 15 min, medium priority [pending]
+  Brushing (Luna) - 15 min, low priority [pending]
+
+Completed tasks:
+  Morning walk (Mochi) - 30 min, high priority [done]
+  Grooming (Mochi) - 25 min, low priority [done]
+  Breakfast (Luna) - 10 min, high priority [done]
+  Laser play (Luna) - 20 min, medium priority [done]
+
+Pending tasks for Mochi, by time:
+  08:30  Morning walk (Mochi) - 30 min, high priority [pending]
+  18:00  Evening walk (Mochi) - 30 min, medium priority [pending]
+  --:--  Grooming (Mochi) - 25 min, low priority [pending]
 ```
+
+The final class design is in [diagrams/uml_final.mmd](diagrams/uml_final.mmd).
